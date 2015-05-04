@@ -46,6 +46,7 @@ import me.jreilly.JamesTweet.Profile.ProfileActivity;
 import me.jreilly.JamesTweet.R;
 import me.jreilly.JamesTweet.UserViews.FavoritesFragment;
 import me.jreilly.JamesTweet.UserViews.MentionsFragment;
+import me.jreilly.JamesTweet.UserViews.NotificationsFragment;
 
 /**
  * The main activity of the app.  It includes a navigation drawer to switch between features
@@ -167,7 +168,7 @@ public class DashActivity extends ActionBarActivity{
                     } else if (navItems[rv.getChildPosition(child) - 1].equals("Mentions")){
                         mDrawer.closeDrawers();
                         getSupportFragmentManager().beginTransaction()
-                                .replace(R.id.content_frame, new MentionsFragment()).commit();
+                                .replace(R.id.content_frame, new NotificationsFragment()).commit();
                     } else if (navItems[rv.getChildPosition(child) - 1].equals("Favorites")) {
                         mDrawer.closeDrawers();
                         getSupportFragmentManager().beginTransaction()

@@ -49,9 +49,9 @@ import me.jreilly.JamesTweet.TweetParsers.ProfileSwitch;
 import me.jreilly.JamesTweet.TweetView.TweetActivity;
 
 /**
- *
+ * Created by jreilly on 4/4/15.
  */
-public class MentionsFragment extends android.support.v4.app.Fragment implements ProfileSwitch {
+public class NotifyFragment extends android.support.v4.app.Fragment implements ProfileSwitch {
 
     private static final String LOG_TAG = "MentionFragment";
 
@@ -66,7 +66,7 @@ public class MentionsFragment extends android.support.v4.app.Fragment implements
     private FragmentTabHost mTabHost;
 
 
-    public MentionsFragment() {
+    public NotifyFragment() {
         // Required empty public constructor
     }
 
@@ -81,11 +81,12 @@ public class MentionsFragment extends android.support.v4.app.Fragment implements
                              Bundle savedInstanceState) {
         // Inflate the layout for this fragment
         View rootView = inflater.inflate(R.layout.fragment_mentions, container, false);
-        this.getActivity().setTitle("Mentions");
+        this.getActivity().setTitle("Notifications");
 
 
-
+        //Setup The View
         setupMentions(rootView);
+
         return rootView;
     }
 
@@ -95,7 +96,9 @@ public class MentionsFragment extends android.support.v4.app.Fragment implements
         //Hide the Fab From the DashFragment
 
         //Setup Realm Helper methods
-        mRealmHelper = new RealmHelper(this.getActivity(), "mentions.realm");
+        mRealmHelper = new RealmHelper(this.getActivity(), "notifications.realm");
+
+
         mDataset = mRealmHelper.getTweets(50);
 
         //Setup timline updater runnable
@@ -157,7 +160,7 @@ public class MentionsFragment extends android.support.v4.app.Fragment implements
     public void swapToTweet(long tweetId, View view){
         Intent intent = new Intent(getActivity(), TweetActivity.class)
                 .putExtra(TweetActivity.TWEET_KEY, tweetId).putExtra(TweetActivity.REALM_KEY,
-                        "mentions.realm");
+                        "notifications.realm");
         String transitionName = getString(R.transition.transition);
         Log.v(LOG_TAG, transitionName);
 
@@ -181,6 +184,35 @@ public class MentionsFragment extends android.support.v4.app.Fragment implements
 
     }
 
+    public Callback<List<Tweet>> getCallback(){
+
+            return new Callback<List<Tweet>>() {
+                @Override
+                public void success(Result<List<Tweet>> listResult) {
+                    List<Tweet> list = listResult.data;
+                    for (Tweet t : list) {
+                        try {
+                            if(t.retweetCount > 0){
+
+                            }
+                            mRealmHelper.insertToRealm(t);
+                        } catch (Exception te) {
+                            Log.e(LOG_TAG, "Exception: " + te);
+                        }
+                    }
+                    mDataset = mRealmHelper.getTweets(50);
+                    mRecyclerView.getAdapter().notifyDataSetChanged();
+                    mSwipeRefreshLayout.setRefreshing(false);
+                }
+
+                @Override
+                public void failure(TwitterException e) {
+                    Log.e(LOG_TAG, "Exception: " + e);
+                }
+            };
+
+    }
+
 
 
 
@@ -193,49 +225,12 @@ public class MentionsFragment extends android.support.v4.app.Fragment implements
             if(mDataset != null && mDataset.size() != 0){
                 id = mDataset.get(0).getOriginalId();
                 final StatusesService service = Twitter.getApiClient().getStatusesService();
-                service.mentionsTimeline(50, id, null, null, null, null, new Callback<List<Tweet>>() {
-                    @Override
-                    public void success(Result<List<Tweet>> listResult) {
-                        List<Tweet> list = listResult.data;
-                        for (Tweet t : list) {
-                            try {
-                                mRealmHelper.insertToRealm(t);
-                            } catch (Exception te) {
-                                Log.e(LOG_TAG, "Exception: " + te);
-                            }
-                        }
-                        mDataset = mRealmHelper.getTweets(50);
-                        mRecyclerView.getAdapter().notifyDataSetChanged();
-                        mSwipeRefreshLayout.setRefreshing(false);
-                    }
-
-                    @Override
-                    public void failure(TwitterException e) {
-                        Log.e(LOG_TAG, "Exception: " + e);
-                    }
-                });
+                service.mentionsTimeline(50, id, null, null, null, null, getCallback());
+                service.retweetsOfMe(50, id, null, null, null, null, getCallback());
             }else{
                 final StatusesService service = Twitter.getApiClient().getStatusesService();
-                service.mentionsTimeline(50, null, null, null, null, null, new Callback<List<Tweet>>() {
-                    @Override
-                    public void success(Result<List<Tweet>> listResult) {
-                        List<Tweet> list = listResult.data;
-                        for (Tweet t : list) {
-                            try {
-                                mRealmHelper.insertToRealm(t);
-                            }catch (Exception te) { Log.e(LOG_TAG, "Exception: " + te);}
-                        }
-                        mDataset = mRealmHelper.getTweets(50);
-                        mRecyclerView.getAdapter().notifyDataSetChanged();
-                        mSwipeRefreshLayout.setRefreshing(false);
-                    }
-
-                    @Override
-                    public void failure(TwitterException e) {
-                        Log.e(LOG_TAG, "Exception: " + e);
-                    }
-                });
-
+                service.mentionsTimeline(50, null, null, null, null, null, getCallback());
+                service.retweetsOfMe(50, null, null, null, null, null, getCallback());
             }
         }
     }

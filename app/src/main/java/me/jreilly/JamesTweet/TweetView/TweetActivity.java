@@ -42,7 +42,7 @@ public class TweetActivity extends ActionBarActivity implements ProfileSwitch {
         getSupportActionBar().setDisplayHomeAsUpEnabled(true);
         if (savedInstanceState == null) {
             getSupportFragmentManager().beginTransaction()
-                    .add(R.id.container, new TweetFragment())
+                    .add(R.id.container, new NewTweetFragment())
                     .commit();
         }
     }
